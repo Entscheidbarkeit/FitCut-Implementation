@@ -31,16 +31,30 @@ class CommunityDetector:
         self.level_data = {int(level): int(nodes) for level, nodes in levels}
 
     def community_reconstruction(self):
+        """
+        The idea here is not to modify the original C++ code, for that it might create bugs.
+        The output of C++ project means:
+            the first column, the id of node,
+            the second column, the id of community, which will be taken as new node id in the next level.
+            next Level starts when the id of nodes turns 0.
 
+        this method start with an initial communities, where each node is itself a community
+        then the community agglomerate to generation new communities of next level.
+        After each level of new communities of generation, the constraints will be checked.
+
+        If the constraint is violated, the new communities will be deprecated and the old one will be returned.
+        If the iteration stopped with no violation, the last level of communities will be returned.
+        :return: the last valid communities, stored in dictionaries ,with key as index of communities and value the array of belonging nodes
+        """
         tree = pd.read_csv("graph.tree", sep =" ", header=None).to_numpy().astype("int")
 
         communities = {}
         for node in self.graph.nodes: #init
             communities[f"{node}"] = [int(node)]
         hist = 0
-        for level in range(self.number_of_levels):
+        for level in range(self.number_of_levels): # level from 0 to max
             new_communities = {}
-            for line in range(hist,hist+self.level_data[level]):
+            for line in range(hist,hist+self.level_data[level]): # agglomerate communities
                 try:
                     original = new_communities[f"{tree[line][1]}"]
                     new_communities[f"{tree[line][1]}"] = original+communities[f"{tree[line][0]}"]
@@ -48,7 +62,7 @@ class CommunityDetector:
                     new_communities[f"{tree[line][1]}"] = communities[f"{tree[line][0]}"]
             hist += self.level_data[level]
 
-            for community in new_communities.values():
+            for community in new_communities.values(): # constraint
                 subgraph = self.graph.subgraph(community)
 
                 weight_sub = sum(data['weight'] for _, _, data in subgraph.edges(data=True))
@@ -66,18 +80,16 @@ class CommunityDetector:
             for node in nodes:
                 community_colors[node] = community_id
 
-        # 设置节点颜色
         node_colors = [community_colors[node] for node in self.graph.nodes]
 
-        # 绘制图
-        pos = nx.spring_layout(self.graph)  # 使用 spring 布局
-        plt.figure(figsize=(10, 8))  # 设置画布大小
+        pos = nx.spring_layout(self.graph)
+        plt.figure(figsize=(10, 8))
         nx.draw(
             self.graph,
             pos,
             with_labels=True,
             node_color=node_colors,
-            cmap=plt.cm.get_cmap('tab20'),  # 使用离散调色板
+            cmap=plt.cm.get_cmap('tab20'),
             node_size=500,
             font_size=10
         )
