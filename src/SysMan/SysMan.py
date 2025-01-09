@@ -1,3 +1,5 @@
+import math
+import random
 from qiskit import QuantumCircuit,transpile
 from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGCircuit, DAGOpNode
@@ -53,7 +55,75 @@ class SystemManager :
             file.write(f"{src} {dest} {data['weight']} \n")
         file.close()
     
-    def partition_construct(community):
+    def partition_construct(graph:nx.Graph,community:dict):
         P = {}
         for ids,com in community.items():
-            P[i] = 
+            subgraph = graph.subgraph(com)
+            P[ids] = Qbits(subgraph)
+        return P
+    
+    def circuit_scheduling(W:dict,P:dict):
+
+        """
+        view of A:
+
+        {worker_id : {"partitions" : [ids of partition] , 
+                      "capacities" : qubits capacity in Integer}}
+        """
+        A = {}
+        for worker in W.keys(): # init
+            A[worker] = {"partitions": [], "capacities": W[worker]}
+        
+        for p_i,p_cap in P.items():
+            w_id = find_closest_worker(p_cap,W)
+            A[w_id]["partitions"] += [p_i]
+        
+        A = dict(sorted(A.items(), key=lambda item: item[1]["capacities"], reverse=True)) # from python 3.7 dict can be accessed by sorted result
+        for w_id_i in A.keys():
+            WP = []
+            for w_id_j in A.keys():
+                if w_id_i != w_id_j:
+                    if A[w_id_j]["capacities"] > A[w_id_i]["capacities"]:
+                        WP.append(w_id_j)
+            total_task = sum(len(A[w_id]["partitions"]) for w_id in WP)
+            Max = math.ceil(total_task/len(WP))
+            Min = Max -1
+            WP = sorted(WP, key = lambda w_id: W[w_id])
+            for w_id in WP:
+                while len(A[w_id_i]["partitions"]) > Max and len(A[w_id]["partitions"])< Min:
+                    p_to_remove = random.choice(A[w_id_i]["partitions"])
+                    A[w_id_i]["partitions"].remove(p_to_remove)
+                    A[w_id]["partitions"].append(p_to_remove)
+                while len(A[w_id_i]["partitions"]) > Max and len(A[w_id]["partitions"])< Max:
+                    p_to_remove = random.choice(A[w_id_i]["partitions"])
+                    A[w_id_i]["partitions"].remove(p_to_remove)
+                    A[w_id]["partitions"].append(p_to_remove)
+        
+        return A
+        
+    
+def find_closest_worker(p_cap, W: dict):
+    """
+    Finds the worker with the closest qubit capacity to the given p_cap.
+
+    Args:
+        p_cap (int): The target qubit capacity to compare against.
+        W (dict): A dictionary where keys are worker names (or IDs)
+                  and values are their respective qubit capacities.
+
+    Returns:
+        The key of the worker with the closest qubit capacity.
+    """
+    
+    closest_worker = None
+    closest_difference = float('inf')
+
+    for worker, capacity in W.items():
+        difference = abs(capacity - p_cap)
+        if difference < closest_difference:
+            closest_difference = difference
+            closest_worker = worker
+
+    return closest_worker
+
+
