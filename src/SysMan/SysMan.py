@@ -3,6 +3,8 @@ from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGCircuit, DAGOpNode
 import networkx as nx
 
+from src.utils import Qbits
+
 
 
 class SystemManager :
@@ -50,4 +52,8 @@ class SystemManager :
             src, dest, data = edge
             file.write(f"{src} {dest} {data['weight']} \n")
         file.close()
-
+    
+    def partition_construct(community):
+        P = {}
+        for ids,com in community.items():
+            P[i] = 

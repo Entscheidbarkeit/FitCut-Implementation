@@ -3,7 +3,7 @@ import networkx as nx
 import re
 import pandas as pd
 from matplotlib import pyplot as plt
-
+from src.utils import Qbits
 
 class CommunityDetector:
     def __init__(self, graph:nx.Graph, QWorker_max_capacity:int=100):
@@ -14,17 +14,17 @@ class CommunityDetector:
 
     def process_graph(self,graph_file):
         rst = subprocess.run(
-            ["../CommunityDetectionExecutable/convert", "-i", graph_file ,"-o","graph.bin", "-w", "graph.weights"]
+            ["CommunityDetectionExecutable/convert", "-i", graph_file ,"-o","graph.bin", "-w", "graph.weights"]
         )
         with open("graph.tree", "w") as f:
             rst = subprocess.run(
-                ["../CommunityDetectionExecutable/community", "graph.bin", "-l", "-1", "-w", "graph.weights"]
+                ["CommunityDetectionExecutable/community", "graph.bin", "-l", "-1", "-w", "graph.weights"]
             , stdout = f
             )
         f.close()
 
     def read_meta(self):
-        rst = subprocess.run(['../CommunityDetectionExecutable/hierarchy', 'graph.tree'], capture_output=True, text=True)
+        rst = subprocess.run(['CommunityDetectionExecutable/hierarchy', 'graph.tree'], capture_output=True, text=True)
         output = rst.stdout
         self.number_of_levels = int(re.search(r"Number of levels: (\d+)", output).group(1))
         levels = re.findall(r"level (\d+): (\d+) nodes", output)
@@ -65,8 +65,9 @@ class CommunityDetector:
             for community in new_communities.values(): # constraint
                 subgraph = self.graph.subgraph(community)
 
-                weight_sub = sum(data['weight'] for _, _, data in subgraph.edges(data=True))
-                qubits = 2 * len(community) - weight_sub
+                # weight_sub = sum(data['weight'] for _, _, data in subgraph.edges(data=True))
+                # qubits = 2 * len(community) - weight_sub
+                qubits = Qbits(subgraph)
                 if qubits > self.QWorker_max_capacity / 2:
                     return communities
 
