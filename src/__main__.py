@@ -8,15 +8,14 @@ from src.SysMan.SysMan import SystemManager
 
 if __name__ == "__main__":
 
-    test = random_circuit(7, 8, max_operands=2,seed=123455)
-
+    test = random_circuit(7, 8, max_operands=2, seed=123455)
 
     sysman = SystemManager()
     dag = sysman.DAG_Convert(test)
     dag_drawer(dag, filename='dag.png')
     g = sysman.DAG_to_weighted_graph(dag)
 
-    relabeled_g,mapping = sysman.relabel_graph_nodes(g)
+    relabeled_g, mapping = sysman.relabel_graph_nodes(g)
     sysman.graph_text_format(relabeled_g)
 
     # print("Nodes in graph:", g.nodes(data=True))
