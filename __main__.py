@@ -34,11 +34,11 @@ if __name__ == "__main__":
     com = cd.community_reconstruction()
     cd.draw_colored_community(com)
 
-    W = QuantemWorker.random_generate(4,15, 12345)
-    P,A = sysman.fitCut_Optimization(relabeled_g,com,W,max(W.keys()),5)
-
-    unfolded_partition = {}
-    for p_id,coms in P.items():
-        unfolded_partition[p_id] = sysman.unfold_partition(coms,com)
-
-    cd.draw_colored_community(unfolded_partition)
+    # W = QuantemWorker.random_generate(4,15, 12345)
+    # P,A = sysman.fitCut_Optimization(relabeled_g,com,W,max(W.keys()),5)
+    #
+    # unfolded_partition = {}
+    # for p_id,coms in P.items():
+    #     unfolded_partition[p_id] = sysman.unfold_partition(coms,com)
+    #
+    # cd.draw_colored_community(unfolded_partition)
