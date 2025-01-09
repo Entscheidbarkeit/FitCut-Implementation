@@ -11,13 +11,16 @@ Install necessary libraries using pip
 pip install -r requirements.txt
 ```
 
-Install Graphviz(also through apt-get) on your computer to see the graph
+Install Graphviz
+```bash
+sudo apt-get install graphviz
+```
 
 # Running the project
 
-make sure you have access locally to the executable in folder "CommunityDetection"
+Download `CommunityDetectionExecutable` which can be found here: https://sites.google.com/site/findcommunities/
 
-Set your working folder as the "FitCut-Implementation" to avoid issues with path resolution
+Set your working directory `/FitCut-Implementation` to avoid path resolution issues
 
 Run this command to run the project
 ```bash
