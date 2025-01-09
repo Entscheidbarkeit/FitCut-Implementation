@@ -8,7 +8,7 @@ from src.SysMan.SysMan import SystemManager
 
 if __name__ == "__main__":
 
-    test = random_circuit(7, 8, max_operands=2,seed=123456)
+    test = random_circuit(7, 8, max_operands=2,seed=123455)
 
 
     sysman = SystemManager()
