@@ -31,7 +31,11 @@ or
 python __main__.py
 ```
 
+# Note
 
+To review the code status before submission deadline, please refer to "commit 9d03ab11e0c079a03918baf123524477a6a1412e"
+
+All update after 09.Jan.2025 was purely out of our wish to fully implement the algorithm from the paper, and shall not be taken in to consideration of grading.
 
 # Contributors
 [**Xuanqi Meng (TUM)**](https://github.com/Entscheidbarkeit) and [**Zachary Walton (TUM)**](https://github.com/zackwalton)
