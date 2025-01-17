@@ -129,24 +129,25 @@ class SystemManager :
                 if w_id_i != w_id_j:
                     if A[w_id_j]["capacities"] > A[w_id_i]["capacities"]:
                         WP.append(w_id_j)
-            total_task = sum(len(A[w_id]["partitions"]) for w_id in WP)
-            Max = math.ceil(total_task/len(WP))
-            Min = Max -1
-            WP = sorted(WP, key = lambda w_id: W[w_id])
-            for w_id in WP:
-                while len(A[w_id_i]["partitions"]) > Max and len(A[w_id]["partitions"])< Min:
-                    p_to_remove = random.choice(A[w_id_i]["partitions"])
-                    A[w_id_i]["partitions"].remove(p_to_remove)
-                    A[w_id]["partitions"].append(p_to_remove)
-                while len(A[w_id_i]["partitions"]) > Max and len(A[w_id]["partitions"])< Max:
-                    p_to_remove = random.choice(A[w_id_i]["partitions"])
-                    A[w_id_i]["partitions"].remove(p_to_remove)
-                    A[w_id]["partitions"].append(p_to_remove)
+            if len(WP) != 0:
+                total_task = sum(len(A[w_id]["partitions"]) for w_id in WP)
+                Max = math.ceil(total_task/len(WP))
+                Min = Max -1
+                WP = sorted(WP, key = lambda w_id: W[w_id])
+                for w_id in WP:
+                    while len(A[w_id_i]["partitions"]) > Max and len(A[w_id]["partitions"])< Min:
+                        p_to_remove = random.choice(A[w_id_i]["partitions"])
+                        A[w_id_i]["partitions"].remove(p_to_remove)
+                        A[w_id]["partitions"].append(p_to_remove)
+                    while len(A[w_id_i]["partitions"]) > Max and len(A[w_id]["partitions"])< Max:
+                        p_to_remove = random.choice(A[w_id_i]["partitions"])
+                        A[w_id_i]["partitions"].remove(p_to_remove)
+                        A[w_id]["partitions"].append(p_to_remove)
         
         return A
         
     
-    def unfold_partition(partition_rst:list,community:dict):
+    def unfold_partition(self,partition_rst:list,community:dict):
         partition_nodes = []
         for id in partition_rst:
             partition_nodes += community[id]
@@ -157,7 +158,7 @@ class SystemManager :
         ru = 0
         sum_qbits = 0
         for worker_info in A.values():
-            partition_pack = worker_info["partition"]
+            partition_pack = worker_info["partitions"]
             partition_info = self.unfold_partition(partition_pack,community)
             subg = graph.subgraph(partition_info)
             sum_qbits += Qbits(subg)
@@ -205,6 +206,7 @@ class SystemManager :
                             else:
                                 merged_graph.add_edge(community_id, community_id_2, weight=edge_data.get('weight', 1))
         nx.draw(merged_graph,with_labels=True)
+        plt.savefig("mergedCommunity.png")
         plt.show()
         return merged_graph
 
@@ -221,48 +223,64 @@ class SystemManager :
         num_of_partitions = len(community.keys())
         while improvement:
             improvement = False
+            #TODO : Here I would interprete the meaning of the pseudo code is just to iterate through all community
+            # And the using of P is just to quickly refer to its belonging partition.
+            # Here based on the pseudo code we can add a list containing all the iterated community to avoid double iteration
+            # or we can just iterating a list containing all the communities and try to locate its partition
             for i in range(num_of_partitions): # use index instead, avoiding changing loop condition
+                iterated_community = []
                 p_id, p_value = list(P.items())[i]
                 bo_1 = float("inf")
                 bo_2 = float("inf")
                 for community_id in p_value: # for each community in a partition
+                    if community_id in iterated_community:
+                        continue
                     for neighbour_partitions in neighbour[community_id]:
+                        iterated_community.append(community_id)
                         gc.collect()
-                        # print("all neighbour: ",neighbour)# for each neighbouring partition
-                        # print("neighbour: " ,neighbour[community_id])
+                        #print("all neighbour: ",neighbour)# for each neighbouring partition
+                        #print("neighbour: " ,neighbour[community_id])
                         #print("neighbour_partitions: " ,neighbour_partitions)
-                        print("P: ", P)
-                        # print("community: ",community)
-                        # print("community_id: ",community_id)
+                        #print("P: ", P)
+                        #print("community: ",community)
+                        #print("community_id: ",community_id)
                         #print("copy")
-                        # P_updated = copy.deepcopy(P)
-                        # P_updated[p_id].remove(community_id)
-                        # P_updated[neighbour_partitions].append(community_id) # try assign a community from neighbour partition to current partition
-                        P_updated = P.copy()
-                        P_updated[p_id] = P[p_id][:]
+                        P_updated = copy.deepcopy(P)
                         P_updated[p_id].remove(community_id)
-                        P_updated[neighbour_partitions] = P[neighbour_partitions][:]
-                        P_updated[neighbour_partitions].append(community_id)
+                        P_updated[neighbour_partitions].append(community_id) # try assign a community from neighbour partition to current partition
+                        # P_updated = P.copy()
+                        # P_updated[p_id] = P[p_id][:]
+                        # P_updated[p_id].remove(community_id)
+                        # P_updated[neighbour_partitions] = P[neighbour_partitions][:]
+                        # P_updated[neighbour_partitions].append(community_id)
                         #print(P_updated)
                         neighbour = self.neighbourUpdate(neighbour_partitions,community_id,neighbour)
+                        #print(self.maxPartitionQubits(graph,P_updated,community), W_max_qbits)
                         if self.maxPartitionQubits(graph,P_updated,community) < W_max_qbits:
                             A = self.circuit_scheduling(graph,W,P_updated,community)
                             nc,ru = self.obj(graph,A,input_qbits,community,P_updated)
+                            #print("nc,ru:", nc, ru)
                             if nc< bo_1:
                                 P = P_updated
                                 bo_1 = nc
                                 bo_2 = ru
+                                improvement = True
                             elif nc == bo_1 and ru < bo_2:
                                 P = P_updated
                                 bo_2 = ru
                                 improvement = True
+                        if improvement: # we have reassigned current community to another partition, no need to iterate over another neighbours
+                            break
+                        #print(improvement)
 
-        A = self.circuit_scheduling(W,P)
+        A = self.circuit_scheduling(graph,W,P,community)
+        print("final partition:" , P)
         print("finished optimization")
         return P,A
 
     def neighbourUpdate(self,p_id,community_id,neighbour):
         neighbour[p_id] += neighbour[community_id]
+        neighbour[p_id] = list(set(neighbour[p_id]))
         neighbour[community_id].remove(p_id)
         return neighbour
 

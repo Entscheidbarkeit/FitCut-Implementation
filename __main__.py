@@ -8,7 +8,7 @@ from src.QWorker.QWorker import QuantemWorker
 import gc
 
 if __name__ == "__main__":
-    test = random_circuit(5, 10, max_operands=2, seed=123455)
+    test = random_circuit(10, 30, max_operands=2, seed=123455)
     sysman = SystemManager()
     dag = sysman.DAG_Convert(test)
     dag_drawer(dag, filename='dag.png')
@@ -27,6 +27,7 @@ if __name__ == "__main__":
     nx.draw_networkx_labels(g, pos, labels=node_labels, font_size=12)
     edge_labels = nx.get_edge_attributes(g, 'weight')
     nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_size=10)
+
     plt.savefig("output.png")
     cd = CommunityDetector(relabeled_g)
     cd.process_graph("text_graph.txt")
@@ -34,11 +35,12 @@ if __name__ == "__main__":
     com = cd.community_reconstruction()
     cd.draw_colored_community(com)
 
-    # W = QuantemWorker.random_generate(4,15, 12345)
-    # P,A = sysman.fitCut_Optimization(relabeled_g,com,W,max(W.keys()),5)
-    #
-    # unfolded_partition = {}
-    # for p_id,coms in P.items():
-    #     unfolded_partition[p_id] = sysman.unfold_partition(coms,com)
-    #
-    # cd.draw_colored_community(unfolded_partition)
+    W = QuantemWorker.random_generate(10,15)
+
+    P,A = sysman.fitCut_Optimization(relabeled_g,com,W,max(W.keys()),10)
+
+    unfolded_partition = {}
+    for p_id,coms in P.items():
+        unfolded_partition[p_id] = sysman.unfold_partition(coms,com)
+
+    cd.draw_colored_community(unfolded_partition)

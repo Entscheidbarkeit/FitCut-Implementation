@@ -9,8 +9,7 @@ class QuantemWorker:
         pass
 
     @staticmethod
-    def random_generate(num, max_Capacity, seed = 12345):
-        random.seed(seed)
+    def random_generate(num, max_Capacity):
         W = {}
         for i in range(num):
             W[i] = random.randint(0,max_Capacity)

@@ -95,6 +95,7 @@ class CommunityDetector:
             font_size=10
         )
         plt.title("Community Graph")
+        plt.savefig("CommunityDetection.png")
         plt.show()
 
 
